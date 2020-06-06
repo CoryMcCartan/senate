@@ -1,0 +1,2 @@
+date,s_exp,s_min,s_q05,s_q25,s_q75,s_q95,s_max,natl_exp,natl_q05,natl_q25,natl_q75,natl_q95,prob,dem_pickup_exp,dem_pickup_q05,dem_pickup_q25,dem_pickup_q75,dem_pickup_q95,gop_pickup_exp,gop_pickup_q05,gop_pickup_q25,gop_pickup_q75,gop_pickup_q95
+2020-06-06,52,43,48,50,54,57,63,0.5445,0.512,0.5307,0.5583,0.5771,0.8058,6,2,4,8,11,1,0,1,1,2

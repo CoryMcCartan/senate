@@ -1,0 +1,13 @@
+*.Rproj
+.Rhistory
+.Rproj.user/
+.DS_Store
+*.tmp
+*.bak
+stan/*.rdata
+*.rds
+*.swp
+output/
+stan/polls
+stan/polls_warmup-*.csv
+.httr-oauth
