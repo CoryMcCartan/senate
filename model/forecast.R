@@ -228,6 +228,7 @@ race_summary = race_draws %>%
               dem_q75 = quantile(race_dem, 0.75),
               dem_q95 = quantile(race_dem, 0.95)) %>%
     left_join(state_abbr, by=c("race"="abbr")) %>%
+    left_join(select(race_prior_d2020, race=abbr, inc), by="race") %>%
     rename(race_name = state) %>%
     select(race, race_name, everything())
 
@@ -282,7 +283,8 @@ entry = tibble(
     natl_q75 = quantile(natl_final, 0.75),
     natl_q95 = quantile(natl_final, 0.95),
     pr_presidency = pr_presidency,
-    prob = mean(seats$dem_seats == 50)*pr_presidency + mean(seats$dem_seats >= 51),
+    pr_tie = mean(seats$dem_seats == 50), 
+    prob = pr_tie*pr_presidency + mean(seats$dem_seats >= 51),
     dem_pickup_exp = median(seats$dem_pickup),
     dem_pickup_q05 = quantile(seats$dem_pickup, 0.05),
     dem_pickup_q25 = quantile(seats$dem_pickup, 0.25),
