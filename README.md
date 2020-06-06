@@ -1,4 +1,4 @@
-# 2020 U.S. Presidential Model
+# 2020 U.S. Senate Model
 
 Model code in `model/` and `stan/` directories.
 

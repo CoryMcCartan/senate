@@ -281,6 +281,7 @@ entry = tibble(
     natl_q25 = quantile(natl_final, 0.25),
     natl_q75 = quantile(natl_final, 0.75),
     natl_q95 = quantile(natl_final, 0.95),
+    pr_presidency = pr_presidency,
     prob = mean(seats$dem_seats == 50)*pr_presidency + mean(seats$dem_seats >= 51),
     dem_pickup_exp = median(seats$dem_pickup),
     dem_pickup_q05 = quantile(seats$dem_pickup, 0.05),
