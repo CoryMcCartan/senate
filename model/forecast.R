@@ -17,7 +17,7 @@ option_list = list(
                 help="Dry run, results not saved."),
     make_option("--date", type="character", default=as.character(Sys.Date()),
                 help="The date to estimate from."),
-    make_option("--iter", type="integer", default=1200,
+    make_option("--iter", type="integer", default=1500,
                 help="Number of MCMC iterations for voter intent estimation,
                       not including warmup iterations."),
     make_option("--chains", type="integer", default=2,
