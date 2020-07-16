@@ -86,6 +86,18 @@ state_abbr = read_rds("data/state_data_2016.rdata") %>%
     bind_rows(tibble(state="Georgia-S", abbr="GA-S")) %>%
     semi_join(race_prior_d2020, by="abbr") %>%
     arrange(abbr)
+state_votes = suppressMessages(read_csv("data/returns.csv")) %>%
+    filter(year >= 2008) %>%
+    group_by(year, state) %>%
+    slice(1) %>%
+    ungroup %>%
+    select(state, abbr=state_po, votes=totalvotes) %>%
+    group_by(state, abbr) %>%
+    summarize(votes = mean(votes)) %>%
+    ungroup %>%
+    bind_rows(tibble(state="Georgia-S", abbr="GA-S")) %>%
+    arrange(state) %>%
+    fill(votes)
 
 
 
@@ -189,8 +201,8 @@ polls_model = get_polls_m(polls_model_path, opt$recompile)
 cli_alert_success("Model loaded.")
 
 # TODO incorporate inv_metric stuff
-fit_polls = polls_model$sample(data=model_d, num_chains=3, num_samples=opt$iter/3,
-                               num_warmup=300, num_cores=4, adapt_delta=0.97,
+fit_polls = polls_model$sample(data=model_d, parallel_chains=4, iter_sampling=opt$iter/3,
+                               iter_warmup=300, chains=3, adapt_delta=0.97,
                                stepsize=0.015)
 cli_alert_success("Model successfully fit.")
 
@@ -220,17 +232,31 @@ race_draws = raw_draws %>%
 race_summary = race_draws %>%
     filter(day == max(day)) %>%
     select(-.chain, -.iteration, -day, -race_num) %>%
+    group_by(.draw) %>%
+    mutate(total_seats = sum(if_else(race_dem > 0.5, 1, 0)),
+           marg = abs(race_dem - 0.5),
+           recount = marg < 0.005,
+           critical_recount = (total_seats %in% 49:52) & recount) %>%
+    arrange(race_dem, .by_group=T) %>%
+    mutate(cuml_seats = fixed_gop + 1:n(),
+           tipping_pt = lag(cuml_seats, default=0) <= 50 & cuml_seats >= 50) %>%
     group_by(race) %>%
     summarize(prob = mean(race_dem > 0.5),
               dem_q05 = quantile(race_dem, 0.05),
               dem_q25 = quantile(race_dem, 0.25),
               dem_exp = median(race_dem),
               dem_q75 = quantile(race_dem, 0.75),
-              dem_q95 = quantile(race_dem, 0.95)) %>%
-    left_join(state_abbr, by=c("race"="abbr")) %>%
+              dem_q95 = quantile(race_dem, 0.95),
+              recount = mean(critical_recount),
+              tipping_pt = mean(tipping_pt)) %>%
+    left_join(state_votes, by=c("race"="abbr")) %>%
+    mutate(pr_decisive = tipping_pt / votes,
+           rel_voter_power = pr_decisive / mean(pr_decisive)) %>%
+    #left_join(state_abbr, by=c("race"="abbr")) %>%
     left_join(select(race_prior_d2020, race=abbr, inc), by="race") %>%
     rename(race_name = state) %>%
     select(race, race_name, everything())
+
 
 sims = race_draws %>%
     filter(day == max(day)) %>%
@@ -283,7 +309,7 @@ entry = tibble(
     natl_q75 = quantile(natl_final, 0.75),
     natl_q95 = quantile(natl_final, 0.95),
     pr_presidency = pr_presidency,
-    pr_tie = mean(seats$dem_seats == 50), 
+    pr_tie = mean(seats$dem_seats == 50),
     prob = pr_tie*pr_presidency + mean(seats$dem_seats >= 51),
     dem_pickup_exp = median(seats$dem_pickup),
     dem_pickup_q05 = quantile(seats$dem_pickup, 0.05),
@@ -356,7 +382,7 @@ write_csv(history, opt$history_file, na="")
 race_entry = race_summary %>%
     mutate(date = from_date) %>%
     mutate_if(is.numeric, ~ round(., 4)) %>%
-    select(date, everything())
+    select(date, everything(), -pr_decisive)
 
 fname = str_c(dirname(opt$history_file), "/race_", basename(opt$history_file))
 if (file.exists(fname)) {

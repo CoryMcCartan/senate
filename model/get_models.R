@@ -37,11 +37,17 @@ get_race_prior_m = function(path, race_d, recompile=F) {
 
 
 get_polls_m = function(path, recompile=F) {
-    compiled_model = path
+    compiled_model = paste0(path, ".rdata")
     if (recompile && file.exists(compiled_model))
         file.remove(compiled_model)
 
-    cmdstan_model("stan/polls.stan", compiler_flags="CXXFLAGS += -Ofast")
-    #cmdstan_model("stan/polls.stan")
+    #if (file.exists(compiled_model)) {
+    #    model = read_rds(compiled_model)
+    #} else {
+    #    model = stan_model("stan/polls.stan")
+    #    write_rds(model, compiled_model, compress="gz")
+    #}
+    #model
+    cmdstan_model("stan/polls.stan", cpp_options=list(CXXFLAGS="-Ofast"))
 }
 
