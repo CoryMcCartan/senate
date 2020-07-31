@@ -22,8 +22,10 @@ get_elec_polls = function(write=F, min_date=ymd("2020-01-01")) {
         select(question_id, date1=start_date, date2=end_date, state,
                party=candidate_party, pct, sample_size, population, pollster) %>%
         filter(party %in% c("dem", "rep")) %>%
-        group_by(party, question_id) %>%
-        filter(n() == 1) %>%
+        group_by(question_id, date1, date2, state, party, sample_size,
+                 population, pollster) %>%
+        summarize(pct = sum(pct)) %>%
+        #filter(n() == 1) %>%
         ungroup %>%
         pivot_wider(names_from=party, values_from=pct) %>%
         mutate(national = F,
