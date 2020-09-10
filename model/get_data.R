@@ -21,6 +21,7 @@ get_elec_polls = function(write=F, min_date=ymd("2020-01-01")) {
                candidate_party = str_to_lower(candidate_party)) %>%
         select(question_id, date1=start_date, date2=end_date, state,
                party=candidate_party, pct, sample_size, population, pollster) %>%
+        mutate(party = if_else(state=="Maine" & party %in% c("ind", "gre"), "dem", party)) %>% # maine IRV
         filter(party %in% c("dem", "rep")) %>%
         group_by(question_id, date1, date2, state, party, sample_size,
                  population, pollster) %>%
