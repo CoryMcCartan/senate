@@ -213,6 +213,8 @@ raw_draws = posterior::as_draws_df(fit_polls$draws())
 ###
 cli_h1("Saving predictions")
 
+pr_presidency = read_json("../president/docs/estimate.json")$prob
+
 natl_draws = raw_draws %>%
     select(.chain, .iteration, .draw, starts_with("natl_dem")) %>%
     pivot_longer(cols=starts_with("natl_dem"), names_to="day",
@@ -239,7 +241,8 @@ race_summary = race_draws %>%
            critical_recount = (total_seats %in% 49:52) & recount) %>%
     arrange(race_dem, .by_group=T) %>%
     mutate(cuml_seats = fixed_gop + 1:n(),
-           tipping_pt = lag(cuml_seats, default=0) <= 50 & cuml_seats >= 50) %>%
+           tipping_pt = pr_presidency * (lag(cuml_seats, default=0) < 50 & cuml_seats >= 50) 
+            + (1 - pr_presidency) * (lag(cuml_seats, default=0) < 51 & cuml_seats >= 51)) %>%
     group_by(race) %>%
     summarize(prob = mean(race_dem > 0.5),
               dem_q05 = quantile(race_dem, 0.05),
@@ -293,7 +296,6 @@ firms = raw_draws %>%
 
 cli_alert_success("Outputs prepared.")
 
-pr_presidency = read_json("../president/docs/estimate.json")$prob
 entry = tibble(
     date = from_date,
     s_exp = median(seats$dem_seats),
