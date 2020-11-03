@@ -35,7 +35,7 @@ option_list = list(
 )
 opt = parse_args(OptionParser(option_list=option_list,
                               description="Forecast the 2020 U.S. Senate elections."))
-opt$iter = 3*ceiling(opt$iter/3)
+opt$iter = opt$chains*ceiling(opt$iter/opt$chains)
 
 suppressMessages(library(tibble))
 suppressMessages(library(dplyr))
@@ -201,8 +201,8 @@ polls_model = get_polls_m(polls_model_path, opt$recompile)
 cli_alert_success("Model loaded.")
 
 # TODO incorporate inv_metric stuff
-fit_polls = polls_model$sample(data=model_d, parallel_chains=4, iter_sampling=opt$iter/3,
-                               iter_warmup=300, chains=opts$chains, adapt_delta=0.97)
+fit_polls = polls_model$sample(data=model_d, parallel_chains=4, iter_sampling=opt$iter/opt$chains,
+                               iter_warmup=300, chains=opt$chains, adapt_delta=0.97)
 cli_alert_success("Model successfully fit.")
 
 raw_draws = posterior::as_draws_df(fit_polls$draws())
