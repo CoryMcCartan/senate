@@ -20,7 +20,7 @@ option_list = list(
     make_option("--iter", type="integer", default=1500,
                 help="Number of MCMC iterations for voter intent estimation,
                       not including warmup iterations."),
-    make_option("--chains", type="integer", default=2,
+    make_option("--chains", type="integer", default=3,
                 help="Number of MCMC chains for voter intent estimation."),
     make_option("--recompile", action="store_true", default=F,
                 help="Force recompile of Stan models."),
@@ -202,8 +202,7 @@ cli_alert_success("Model loaded.")
 
 # TODO incorporate inv_metric stuff
 fit_polls = polls_model$sample(data=model_d, parallel_chains=4, iter_sampling=opt$iter/3,
-                               iter_warmup=300, chains=3, adapt_delta=0.97,
-                               step_size=0.015)
+                               iter_warmup=300, chains=opts$chains, adapt_delta=0.97)
 cli_alert_success("Model successfully fit.")
 
 raw_draws = posterior::as_draws_df(fit_polls$draws())
@@ -276,6 +275,16 @@ seats = race_draws %>%
               dem_pickup = sum(pickup_dem),
               gop_pickup = sum(pickup_gop)) %>%
     mutate(dem_seats = fixed_dem + dem_won)
+
+# export matrix
+race_draws %>%
+    filter(day == max(day)) %>%
+    select(-.chain, -.iteration, -race_num, -day) %>%
+    pivot_wider(names_from=race, values_from=race_dem) %>%
+    mutate(natl=natl_final, seats=seats$dem_seats) %>%
+    select(draw=.draw, seats, natl, everything()) %>%
+    write_csv("docs/draws_mat.csv")
+
 
 firm_ct = polls_d %>%
     group_by(firm) %>%
